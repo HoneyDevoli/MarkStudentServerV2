@@ -23,6 +23,15 @@ public class TeacherService implements ITeacherService {
         return repository.getById(id);
     }
 
+    public Teacher getTeacherAuthorization(String login, String password ) {
+        Teacher teacher = repository.getByLogin(login);
+        if (teacher!=null && teacher.getPassword().equals(password)) {
+            return teacher;
+        } else {
+            return null;
+        }
+    }
+
     public Teacher save(Teacher teacher) {
         return repository.saveAndFlush(teacher);
     }

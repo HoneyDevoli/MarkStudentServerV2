@@ -37,7 +37,8 @@ public class Teacher {
 
 
     @OneToMany(mappedBy = "teacher", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
-    @JsonManagedReference
+    //@JsonManagedReference
+    @JsonIgnore
     //@JsonIgnore dont serisiable collection
     private Set<Subject> subjects = new HashSet<>();
 
