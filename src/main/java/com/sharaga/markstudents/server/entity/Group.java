@@ -29,7 +29,7 @@ public class Group {
     private List<Subject> subjects = new ArrayList<>();
 
     @OneToMany(mappedBy = "group", cascade = CascadeType.ALL)
-    @JsonManagedReference
+    //@JsonManagedReference
     private List<Student> students = new ArrayList<>();
 
     public void addStudent(Student student) {

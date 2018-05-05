@@ -7,4 +7,6 @@ import java.util.List;
 
 public interface SubjectRepository  extends JpaRepository<Subject, Long> {
 
+    Subject getById(long id);
+
 }

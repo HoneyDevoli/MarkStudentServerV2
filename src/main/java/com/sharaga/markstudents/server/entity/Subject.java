@@ -1,6 +1,7 @@
 package com.sharaga.markstudents.server.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import org.hibernate.annotations.GenericGenerator;
@@ -29,12 +30,14 @@ public class Subject {
     @JsonBackReference
     private Teacher teacher;
 
-    @JsonManagedReference
+    //@JsonManagedReference
+    @JsonIgnore
     @ManyToMany(cascade = {CascadeType.ALL},fetch = FetchType.LAZY)
     @JoinTable(name = "subject_group", joinColumns = @JoinColumn(name = "subject_id"), inverseJoinColumns = @JoinColumn(name = "group_id"))
     private List<Group> groups = new ArrayList<>();
 
-    @JsonManagedReference
+    //@JsonManagedReference
+    @JsonIgnore
     @OneToMany(cascade = {CascadeType.ALL},mappedBy = "subject")
     private List<Lesson> lessons = new ArrayList<>();
 
@@ -102,7 +105,6 @@ public class Subject {
 
         Subject that = (Subject) o;
 
-        if (id != that.id) return false;
         if (title != null ? !title.equals(that.getTitle()) : that.getTitle() != null) return false;
         if (type != null ? !type.equals(that.getType()) : that.type != null) return false;
 

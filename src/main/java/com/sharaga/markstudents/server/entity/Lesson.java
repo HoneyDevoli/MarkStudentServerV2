@@ -1,6 +1,7 @@
 package com.sharaga.markstudents.server.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import org.hibernate.annotations.GenericGenerator;
 
@@ -30,7 +31,8 @@ public class Lesson {
     @JsonBackReference
     private Subject subject;
 
-    @JsonManagedReference
+    //@JsonManagedReference
+    @JsonIgnore
     @ManyToMany(cascade = {CascadeType.ALL},fetch = FetchType.LAZY)
     @JoinTable(name = "lesson_student", joinColumns = @JoinColumn(name = "lesson_id"), inverseJoinColumns = @JoinColumn(name = "student_id"))
     private List<Student> students = new ArrayList<>();
@@ -93,5 +95,28 @@ public class Lesson {
 
     public void setStudents(List<Student> students) {
         this.students = students;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Lesson that = (Lesson) o;
+
+        if (!this.date.equals(that.getDate())) return false;
+        if (this.auditorium != null ? !this.auditorium.equals(that.getAuditorium()) : that.getAuditorium() != null) return false;
+        if (this.numberOfLesson != that.getNumberOfLesson()) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = (int)id;
+        result = 31 * result + (this.date != null ? this.date.hashCode() : 0);
+        result = result + (this.auditorium != null ? this.auditorium.hashCode() : 0);
+        result = result + numberOfLesson;
+        return result;
     }
 }

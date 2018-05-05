@@ -1,6 +1,7 @@
 package com.sharaga.markstudents.server.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
@@ -28,12 +29,13 @@ public class Student {
     @Column(name = "login", nullable = true, length = 50)
     private String login;
 
+    @JsonIgnore
     @Column(name = "password", nullable = true, length = 50)
     private String password;
 
     @ManyToOne()
     @JoinColumn(name = "group_id")
-    @JsonBackReference
+    //@JsonBackReference
     private Group group;
 
     @JsonBackReference

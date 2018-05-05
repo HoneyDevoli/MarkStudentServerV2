@@ -12,5 +12,6 @@ public interface ITeacherService {
     Teacher getByID(long id);
     Teacher save(Teacher teacher);
     void remove(long id);
+    Teacher getTeacherAuthorization(String login, String password );
 
 }

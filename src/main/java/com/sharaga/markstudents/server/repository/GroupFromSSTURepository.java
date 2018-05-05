@@ -5,4 +5,5 @@ import com.sharaga.markstudents.server.entity.GroupFromSSTU;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface GroupFromSSTURepository extends JpaRepository<GroupFromSSTU, Long> {
+    GroupFromSSTU getByOwnPage(String name);
 }

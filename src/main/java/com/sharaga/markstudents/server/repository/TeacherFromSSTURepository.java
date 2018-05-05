@@ -6,4 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface TeacherFromSSTURepository extends JpaRepository<TeacherFromSSTU, Long> {
 
+    TeacherFromSSTU getByOwnPage(String ownPage);
+
+
 }
