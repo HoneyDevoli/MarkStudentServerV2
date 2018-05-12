@@ -5,7 +5,9 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -60,6 +62,27 @@ public class Teacher {
         subject.setTeacher(null);
     }
 
+    @OneToMany(mappedBy = "teacher", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<Code> codes = new ArrayList<>();
+
+    public void addCode(Code code) {
+        codes.add(code);
+        code.setTeacher(this);
+    }
+
+    public void removeCode(Code code) {
+        codes.remove(code);
+        code.setTeacher(null);
+    }
+
+    public List<Code> getCodes() {
+        return codes;
+    }
+
+    public void setCodes(List<Code> codes) {
+        this.codes = codes;
+    }
 
     public Teacher(){
     }

@@ -2,6 +2,7 @@ package com.sharaga.markstudents.server.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
@@ -41,6 +42,29 @@ public class Student {
     @JsonBackReference
     @ManyToMany(mappedBy = "students",fetch = FetchType.LAZY)
     private List<Lesson> lessons = new ArrayList<>();
+
+    @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, orphanRemoval = true,fetch = FetchType.LAZY)
+    @JsonBackReference
+
+    private List<Code> codes = new ArrayList<>();
+
+    public void addCode(Code code) {
+        codes.add(code);
+        code.setStudent(this);
+    }
+
+    public void removeCode(Code code) {
+        codes.remove(code);
+        code.setStudent(null);
+    }
+
+    public List<Code> getCodes() {
+        return codes;
+    }
+
+    public void setCodes(List<Code> codes) {
+        this.codes = codes;
+    }
 
     public long getId() {
         return id;
@@ -104,5 +128,20 @@ public class Student {
 
     public void setLessons(List<Lesson> lessons) {
         this.lessons = lessons;
+    }
+
+    @Override
+    public int hashCode() {
+        int code = this.firstName.hashCode();
+        code = code + this.lastName.hashCode();
+        code = code + this.login.hashCode();
+        return code;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if(this.id != ((Student)obj).getId())
+            return false;
+        return true;
     }
 }

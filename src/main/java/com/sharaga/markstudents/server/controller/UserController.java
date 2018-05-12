@@ -1,15 +1,14 @@
 package com.sharaga.markstudents.server.controller;
 
 import com.sharaga.markstudents.server.dto.*;
-import com.sharaga.markstudents.server.entity.Lesson;
-import com.sharaga.markstudents.server.entity.Student;
-import com.sharaga.markstudents.server.entity.Subject;
-import com.sharaga.markstudents.server.entity.Teacher;
+import com.sharaga.markstudents.server.entity.*;
+import com.sharaga.markstudents.server.repository.CodeRepository;
 import com.sharaga.markstudents.server.repository.LessonRepository;
 import com.sharaga.markstudents.server.repository.StudentRepository;
 import com.sharaga.markstudents.server.repository.SubjectRepository;
 import com.sharaga.markstudents.server.service.TeacherService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
 import java.lang.reflect.Array;
@@ -27,6 +26,8 @@ public class UserController {
     LessonRepository lessonRepository;
     @Autowired
     StudentRepository studentRepository;
+    @Autowired
+    private CodeRepository codeRepository;
 
     @RequestMapping(value = "/addlesson", method = RequestMethod.GET)
     public long addLesson(long idTeacher,String aud, String date,
@@ -38,11 +39,20 @@ public class UserController {
         newLesson.setNumberOfLesson(numLesson);
 
         Teacher teacher = teacherService.getByID(idTeacher);
+
+        Code newCode = new Code();
+        newCode.setMarkOpportunity(true);
+        newCode.setTeacher(teacher);
+
         Set<Subject> subjects = teacher.getSubjects();
         for(Subject s : subjects){
             if(s.getTitle().equals(title) && s.getType().equals(type)){
                 for (Lesson currentLesson : s.getLessons()){
                     if(currentLesson.equals(newLesson)){
+
+                        newCode.setCode(currentLesson.getId()+"/"+1);
+                        codeRepository.saveAndFlush(newCode);
+
                         return currentLesson.getId();
                     }
                 }
@@ -54,6 +64,11 @@ public class UserController {
                     subject = subjectRepository.getById(s.getId());
                     for (Lesson currentLesson : subject.getLessons()) {
                         if (currentLesson.equals(newLesson)) {
+
+                            newCode = codeRepository.saveAndFlush(newCode);
+                            newCode.setCode(currentLesson.getId()+"/"+1);
+                            codeRepository.saveAndFlush(newCode);
+
                             return currentLesson.getId();
                         }
                     }
@@ -75,9 +90,10 @@ public class UserController {
 
     @RequestMapping(value = "/markstudent", method = RequestMethod.GET)
     @ResponseBody
-    public String markStudent(long idLesson, long idStudent){
+    public String markStudent(String idLesson, long idStudent){
 
-        Lesson lesson = lessonRepository.getById(idLesson);
+        long idLessonNum = Long.valueOf(idLesson.substring(0,idLesson.indexOf("/")));
+        Lesson lesson = lessonRepository.getById(idLessonNum);
 
         for(Student currentStudent : lesson.getStudents()){
             if(currentStudent.getId() == idStudent){
@@ -85,10 +101,35 @@ public class UserController {
             }
         }
 
-        Student student = studentRepository.getById(idStudent);
-        lesson.addStudent(student);
-        lessonRepository.saveAndFlush(lesson);
-        return "Вы успешно отметились";
+        List<Code> codes = codeRepository.findAllByCode(idLesson);
+        if(codes.size() == 0) return "Фейковый QR-код";
+        Code lastCode = codes.get(codes.size()-1);
+
+        if(lastCode.isMarkOpportunity()) {
+
+            Date date = new Date();
+            lastCode.setDate(date);
+            lastCode.setMarkOpportunity(false);
+
+            Student student = studentRepository.getById(idStudent);
+            student.addCode(lastCode);
+            lesson.addStudent(student);
+            lessonRepository.saveAndFlush(lesson);
+            return "Вы успешно отметились";
+
+        } else {
+            Code fakeCode = new Code();
+            Date date = new Date();
+            fakeCode.setDate(date);
+            fakeCode.setMarkOpportunity(false);
+            fakeCode.setCode(idLesson.replace("/","fake"));
+            fakeCode.setTeacher(lastCode.getTeacher());
+
+            Student student = studentRepository.getById(idStudent);
+            student.addCode(fakeCode);
+            studentRepository.saveAndFlush(student);
+            return "Попытка отметится по недействительному коду";
+        }
     }
 
     @RequestMapping(value = "getstatistics", method = RequestMethod.GET)
@@ -114,9 +155,10 @@ public class UserController {
                 for (Student currentStudent : currentLesson.getStudents()) {
                     if (students.add(currentStudent)) {
                         int countLesson = 0;
-                        for (Lesson lessStud : currentStudent.getLessons()) {
-                            if (lessStud.getId() == currentLesson.getId()) {
-                                countLesson++;
+                        for (Lesson lessStud : lessons) {
+                            for(Student stud: lessStud.getStudents())
+                                if (currentStudent.getId() == stud.getId()) {
+                                    countLesson++;
                             }
                         }
                         countLessonOfStudent.add(countLesson);
@@ -153,5 +195,50 @@ public class UserController {
         return arrayLesson;
     }
 
+    @RequestMapping(value = "/generatecode")
+    public void generateCode(long idTeacher, long idLesson, int numberOfCode, boolean isMarkOpport){
 
+        Teacher teacher = teacherService.getByID(idTeacher);
+
+        if(!isMarkOpport) {
+            List<Code> codes = codeRepository.findAllByCode(idLesson + "/" + numberOfCode);
+            if (codes.size() != 0) {
+                Code lastCode = codes.get(codes.size() - 1);
+                lastCode.setMarkOpportunity(false);
+                codeRepository.saveAndFlush(lastCode);
+            }
+        } else {
+            Code newCode = new Code();
+            newCode.setMarkOpportunity(isMarkOpport);
+            newCode.setTeacher(teacher);
+            newCode.setCode(idLesson + "/" + numberOfCode);
+
+            codeRepository.saveAndFlush(newCode);
+        }
+    }
+
+    @RequestMapping(value="/fakemark")
+    public ArrayCodeDTO fakeMark(long idTeacher){
+
+        List<Code> fakesMark= new ArrayList<>();
+        for(Code currentCode : teacherService.getByID(idTeacher).getCodes() ){
+            if(currentCode.getCode().contains("fake")){
+                fakesMark.add(currentCode);
+            }
+        }
+        ArrayCodeDTO arrayCodeDTO = new ArrayCodeDTO();
+        arrayCodeDTO.setCodes(fakesMark);
+        return arrayCodeDTO;
+    }
+
+    @RequestMapping(value="/deletemarks")
+    public void deleteMarks(long idTeacher){
+        Teacher teacher = teacherService.getByID(idTeacher);
+        List<Code> codes = codeRepository.findAllByTeacher(teacher);
+        for(Code code : codes){
+            if(code.getCode().contains("fake")){
+                codeRepository.delete(code);
+            }
+        }
+    }
 }

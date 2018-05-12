@@ -97,7 +97,7 @@ public class AccountController {
         teacher.setMiddleName(secondname);
         teacher.setLastName(lastname);
 
-        String ownerPage = lastname.replace(lastname.substring(0,1),lastname.substring(0,1).toUpperCase())
+        String ownerPage = lastname.replaceFirst(lastname.substring(0,1),lastname.substring(0,1).toUpperCase())
                 + " " + firstname.substring(0,1).toUpperCase() + secondname.substring(0,1).toUpperCase();
         List<TeacherFromSSTU> tfList = teacherFromSSTURepository.findAll();
         for(TeacherFromSSTU tf : tfList){
